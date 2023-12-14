@@ -8,7 +8,7 @@ import androidx.navigation.navigation
 import com.mamon.nestednavcompose.ui.nav_graph.utils.Graph
 import com.mamon.nestednavcompose.ui.nav_graph.utils.Screens
 import com.mamon.nestednavcompose.ui.screens.Detail
-import com.mamon.nestednavcompose.ui.screens.Home
+import com.mamon.nestednavcompose.ui.screens.home.Home
 
 
 
