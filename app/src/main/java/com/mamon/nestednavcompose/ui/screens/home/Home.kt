@@ -2,6 +2,7 @@
 
 package com.mamon.nestednavcompose.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,14 +23,16 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.mamon.nestednavcompose.ui.nav_graph.utils.TapItem
+import com.mamon.nestednavcompose.ui.nav_graph.utils.TabItem
 
 
 object TapHome {
@@ -40,12 +43,16 @@ object TapHome {
 
 @Composable
 fun Home(
-    navController: NavController
+    navController: NavController,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
-    var tapIndex by remember { mutableIntStateOf(TapHome.LOCATION) }
+    val lastTabPosition = viewModel.currentTapPosition.collectAsState().value
+    var tapIndex by remember { mutableIntStateOf(lastTabPosition) }
     val pagerState = rememberPagerState(initialPage = tapIndex){
-        tapItems.size
+        tabItems.size
     }
+
+    Log.d("Home","Current Tap: $lastTabPosition")
 
     LaunchedEffect(key1 = tapIndex) {
         pagerState.animateScrollToPage(tapIndex)
@@ -68,7 +75,7 @@ fun Home(
         TabRow(
             selectedTabIndex = tapIndex,
         ) {
-            tapItems.forEachIndexed { index, item ->
+            tabItems.forEachIndexed { index, item ->
                 Tab(
                     text = {
                         Text(text = item.title)
@@ -76,6 +83,7 @@ fun Home(
                     selected = tapIndex == index,
                     onClick = {
                         tapIndex = index
+                        viewModel.updateTabPosition(index)
                     },
                     icon = {
                         Icon(
@@ -89,9 +97,23 @@ fun Home(
         }
 
 
-        TapPager(
+        TabPager(
             modifier = Modifier.weight(1f),
-            pagerState = pagerState
+            pagerState = pagerState,
+            onScroll = { currentTap ->
+
+                when(currentTap){
+                    TapHome.LOCATION -> {
+                        Text(text = "Location Tap")
+                    }
+                    TapHome.DETAILS -> {
+                        Text(text = "Details Tap")
+                    }
+                    TapHome.SECURITY -> {
+                        Text(text = "Security Tap")
+                    }
+                }
+            }
         )
 
     }
@@ -101,9 +123,10 @@ fun Home(
 
 
 @Composable
-fun TapPager(
+fun TabPager(
     modifier: Modifier,
-    pagerState: PagerState
+    pagerState: PagerState,
+    onScroll: @Composable (page: Int) -> Unit
 ) {
     HorizontalPager(
         modifier = modifier,
@@ -115,36 +138,25 @@ fun TapPager(
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ){
-            when(currentTap){
-                TapHome.LOCATION -> {
-                    Text(text = "Location Tap")
-                }
-                TapHome.DETAILS -> {
-                    Text(text = "Details Tap")
-                }
-                TapHome.SECURITY -> {
-                    Text(text = "Security Tap")
-                }
-            }
-
+            onScroll(currentTap)
         }
 
     }
 }
 
 
-private val tapItems = listOf(
-    TapItem(
+private val tabItems = listOf(
+    TabItem(
         title = "Location",
         selectedIcon = Icons.Filled.LocationOn,
         unSelectedIcon = Icons.Outlined.LocationOn
     ),
-    TapItem(
+    TabItem(
         title = "Details",
         selectedIcon = Icons.Filled.Edit,
         unSelectedIcon = Icons.Outlined.Edit
     ),
-    TapItem(
+    TabItem(
         title = "Security",
         selectedIcon = Icons.Filled.Lock,
         unSelectedIcon = Icons.Outlined.Lock
